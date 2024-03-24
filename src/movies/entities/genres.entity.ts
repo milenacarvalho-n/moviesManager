@@ -1,34 +1,24 @@
-import { randomUUID } from 'node:crypto';
 import {
   BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
   ManyToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Genre } from './genres.entity';
+import { randomUUID } from 'node:crypto';
+import { Movie } from './movie.entity';
 
-@Entity('movies')
-export class Movie {
+@Entity('genres')
+export class Genre {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  title: string;
+  name: string;
 
-  @Column()
-  duration: string;
-
-  @Column()
-  year: string;
-
-  @JoinTable()
-  @ManyToMany(() => Genre, (genre) => genre.movies, {
-    cascade: true,
-  })
-  genres: Genre[];
+  @ManyToMany(() => Movie, (movie) => movie.genres)
+  movies: Movie[];
 
   @CreateDateColumn({ type: 'timestamp' })
   created_at: Date;
