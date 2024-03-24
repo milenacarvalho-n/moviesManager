@@ -36,14 +36,14 @@ export class MoviesService {
 
   public async findAll() {
     return await this.movieRepository.find({
-      relations: ['tags'],
+      relations: ['genres'],
     });
   }
 
   public async findOne(id: string) {
     const movie = await this.movieRepository.findOne({
       where: { id },
-      relations: ['tags'],
+      relations: ['genres'],
     });
     if (!movie) {
       throw new HttpException(

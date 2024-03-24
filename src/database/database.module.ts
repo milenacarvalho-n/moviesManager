@@ -3,29 +3,24 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Genre } from 'src/movies/entities/genres.entity';
 import { Movie } from 'src/movies/entities/movie.entity';
-import { DataSourceOptions } from 'typeorm';
-
-require('dotenv').config();
-
-export const dataSourceOptions: DataSourceOptions = {
-  type: 'mysql',
-  host: process.env.HOST,
-  port: Number(process.env.PORT),
-  username: String(process.env.USERNAME),
-  password: String(process.env.PASSWORD),
-  database: String(process.env.DBNAME),
-  entities: [Movie, Genre],
-  synchronize: true,
-};
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-      useFactory: async () => {
+      useFactory: async (configService: ConfigService) => {
         return {
-          ...dataSourceOptions,
+          type: 'mysql',
+          host: 'localhost',
+          port: Number(configService.get('PORT')),
+          username: configService.get('DB_USERNAME'),
+          password: configService.get('DB_PASSWORD'),
+          database: 'moviesmanager-db',
+          entities: [Movie, Genre],
+          synchronize: false,
         };
       },
+      inject: [ConfigService],
     }),
   ],
 })
