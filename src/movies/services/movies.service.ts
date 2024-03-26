@@ -22,6 +22,14 @@ export class MoviesService {
   ) {}
 
   public async create(createMovieDto: CreateMovieDto) {
+    const validation = await this.preloadMovieByName(createMovieDto.title);
+    if (validation) {
+      throw new HttpException(
+        `movie with title: ${createMovieDto.title} already exists`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const genres = await Promise.all(
       createMovieDto.genres.map((name) => this.preloadGenreByName(name)),
     );
@@ -89,5 +97,13 @@ export class MoviesService {
       return genre;
     }
     return this.genreRepository.create({ name });
+  }
+
+  private async preloadMovieByName(title: string): Promise<boolean> {
+    const movie = await this.movieRepository.findOne({ where: { title } });
+    if (movie) {
+      return true;
+    }
+    return false;
   }
 }
