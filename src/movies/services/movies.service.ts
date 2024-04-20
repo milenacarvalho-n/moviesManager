@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Movie } from '../entities/movie.entity';
 import { Repository } from 'typeorm';
 import { Genre } from '../entities/genres.entity';
+import { OmdbService } from 'src/integrations/omdb/omdb.service';
 
 @Injectable()
 export class MoviesService {
@@ -19,6 +20,7 @@ export class MoviesService {
 
     @InjectRepository(Genre)
     private readonly genreRepository: Repository<Genre>,
+    private readonly omdbService: OmdbService,
   ) {}
 
   public async create(createMovieDto: CreateMovieDto) {
@@ -43,9 +45,31 @@ export class MoviesService {
   }
 
   public async findAll() {
-    return await this.movieRepository.find({
+    const movies = await this.movieRepository.find({
       relations: ['genres'],
     });
+    const data = [];
+    for (const movie of movies) {
+      const res = await this.preloadMovieImages(movie.title);
+
+      if (res.Response === 'False') {
+        const { genres, ...rest } = movie;
+        data.push({
+          ...rest,
+          genres: genres.map((genre) => genre.name),
+          imageUrl:
+            'https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg',
+        });
+      } else {
+        const { genres, ...rest } = movie;
+        data.push({
+          ...rest,
+          genres: genres.map((genre) => genre.name),
+          imageUrl: res.Poster,
+        });
+      }
+    }
+    return data;
   }
 
   public async findOne(id: string) {
@@ -105,5 +129,9 @@ export class MoviesService {
       return true;
     }
     return false;
+  }
+
+  private async preloadMovieImages(titleMovie: string): Promise<any> {
+    return await this.omdbService.findMovieByTitle(titleMovie);
   }
 }
